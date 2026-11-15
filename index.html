@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phòng Thí Nghiệm Vật Lý Ảo - Kiểm Chứng Định Luật Boyle</title>
+    <link rel="icon" type="image/jpeg" href="images.jpg">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -217,7 +218,7 @@
                         </span>
                     </div>
                     <h1 class="text-lg md:text-xl font-extrabold tracking-tight text-white">
-                        PHÒNG THÍ NGHIỆM ĐỊNH LUẬT BOYLE
+                        PHÒNG THÍ NGHIỆM ĐỊNH LUẬT BOYLE CỦA NHÓM 4 LỚP 12A8
                     </h1>
                 </div>
             </div>
@@ -237,11 +238,11 @@
                     <button data-temp="300" data-k="240" class="temp-btn px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition bg-sky-500 text-slate-950 shadow">
                         300K (k=240)
                     </button>
-                    <button data-temp="375" data-k="300" class="temp-btn px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition text-slate-300 hover:text-white">
-                        375K (k=300)
+                    <button data-temp="1000" data-k="800" class="temp-btn px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition text-slate-300 hover:text-white">
+                        1000K (k=300)
                     </button>
-                    <button data-temp="450" data-k="360" class="temp-btn px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition text-slate-300 hover:text-white">
-                        450K (k=360)
+                    <button data-temp="1700" data-k="1360" class="temp-btn px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition text-slate-300 hover:text-white">
+                        1700K (k=360)
                     </button>
                 </div>
 
@@ -609,7 +610,8 @@
             nextId: 1,
             autoSampling: false,
             collisionCounter: 0,
-            collisionsPerSec: 320
+            collisionsPerSec: 320,
+            recordedTemperatures: new Set([300]) // Keep track of which temperatures have recorded data
         };
 
         // DOM Elements
@@ -673,7 +675,7 @@
                 info: 'fa-circle-info text-sky-400',
                 success: 'fa-circle-check text-emerald-400',
                 warning: 'fa-triangle-exclamation text-amber-400',
-                danger: 'fa-Radiation text-red-400'
+                danger: 'fa-radiation text-red-400'
             };
 
             const toast = document.createElement('div');
@@ -1145,21 +1147,79 @@
         let pvChart = null;
         let pinvChart = null;
 
-        function generateTheoreticalPVPoints() {
-            if (!state.showTheoryCurve) return [];
+        const temperatureColors = {
+            300: '#38bdf8', // Cyan
+            1000: '#f59e0b', // Amber
+            1700: '#ef4444'  // Red
+        };
+
+        function generateTheoreticalPVPoints(kConst) {
             const pts = [];
             for (let v = 10; v <= 120; v += 2) {
-                pts.push({ x: v, y: +(state.kConstant / v).toFixed(3) });
+                pts.push({ x: v, y: +(kConst / v).toFixed(3) });
             }
             return pts;
         }
 
-        function generateTheoreticalPInvVPoints() {
-            if (!state.showTheoryCurve) return [];
+        function generateTheoreticalPInvVPoints(kConst) {
             return [
                 { x: 0, y: 0 },
-                { x: 0.105, y: +(state.kConstant * 0.105).toFixed(3) }
+                { x: 0.105, y: +(kConst * 0.105).toFixed(3) }
             ];
+        }
+        
+        function getDatasetBase(temp) {
+             const color = temperatureColors[temp];
+             return {
+                 label: `Điểm thực nghiệm (T=${temp}K)`,
+                 data: [],
+                 showLine: true,
+                 tension: 0.35,
+                 borderColor: color,
+                 backgroundColor: color,
+                 pointBackgroundColor: '#0b0f19',
+                 pointBorderColor: color,
+                 pointBorderWidth: 2.5,
+                 pointRadius: 5.5,
+                 pointHoverRadius: 8,
+                 borderWidth: 2.5,
+                 order: 2,
+                 tempId: temp
+             };
+        }
+
+        function getTheoryDatasetBase(temp, kConst) {
+             const color = temperatureColors[temp];
+             return {
+                 label: `Lý thuyết (T=${temp}K)`,
+                 data: generateTheoreticalPVPoints(kConst),
+                 showLine: true,
+                 tension: 0.4,
+                 borderColor: color,
+                 borderDash: [5, 5],
+                 pointRadius: 0,
+                 borderWidth: 1.5,
+                 order: 3,
+                 borderColor: `${color}80`, // 50% opacity
+                 tempId: temp
+             };
+        }
+
+        function getTheoryLinearDatasetBase(temp, kConst) {
+             const color = temperatureColors[temp];
+             return {
+                 label: `Lý thuyết (T=${temp}K)`,
+                 data: generateTheoreticalPInvVPoints(kConst),
+                 showLine: true,
+                 tension: 0,
+                 borderColor: color,
+                 borderDash: [5, 5],
+                 pointRadius: 0,
+                 borderWidth: 1.5,
+                 order: 3,
+                 borderColor: `${color}80`, // 50% opacity
+                 tempId: temp
+             };
         }
 
         function initCharts() {
@@ -1173,41 +1233,17 @@
                 data: {
                     datasets: [
                         {
-                            label: 'Điểm thực nghiệm (V, P)',
-                            data: [],
-                            showLine: true,
-                            tension: 0.35,
-                            borderColor: '#38bdf8',
-                            backgroundColor: '#38bdf8',
-                            pointBackgroundColor: '#0b0f19',
-                            pointBorderColor: '#38bdf8',
-                            pointBorderWidth: 2.5,
-                            pointRadius: 5.5,
-                            pointHoverRadius: 8,
-                            borderWidth: 2.5,
-                            order: 2
-                        },
-                        {
                             label: 'Trạng thái hiện tại',
                             data: [{ x: state.volume, y: getCurrentPressure() }],
                             showLine: false,
-                            backgroundColor: '#ef4444',
-                            borderColor: '#ffffff',
+                            backgroundColor: '#ffffff',
+                            borderColor: '#ef4444',
                             borderWidth: 2,
                             pointRadius: 6.5,
                             order: 1
                         },
-                        {
-                            label: 'Đường Hypebol lý thuyết',
-                            data: generateTheoreticalPVPoints(),
-                            showLine: true,
-                            tension: 0.4,
-                            borderColor: 'rgba(148, 163, 184, 0.32)',
-                            borderDash: [5, 5],
-                            pointRadius: 0,
-                            borderWidth: 1.5,
-                            order: 3
-                        }
+                        getDatasetBase(300),
+                        getTheoryDatasetBase(300, 240)
                     ]
                 },
                 options: {
@@ -1216,7 +1252,13 @@
                     animation: { duration: 250 },
                     plugins: {
                         legend: {
-                            labels: { boxWidth: 10, font: { size: 10 } }
+                            labels: { 
+                                boxWidth: 10, font: { size: 10 },
+                                filter: function(item, chart) {
+                                    // Hide current state from legend to save space
+                                    return !item.text.includes('hiện tại');
+                                }
+                            }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -1231,7 +1273,7 @@
                         x: {
                             type: 'linear',
                             min: 0,
-                            max: 125,
+                            max: 140,
                             title: { display: true, text: 'Thể tích V (cm³)', color: '#cbd5e1', font: { size: 11, weight: 'bold' } },
                             grid: { color: 'rgba(148, 163, 184, 0.1)' }
                         },
@@ -1253,41 +1295,17 @@
                 data: {
                     datasets: [
                         {
-                            label: 'Điểm thực nghiệm (1/V, P)',
-                            data: [],
-                            showLine: true,
-                            tension: 0,
-                            borderColor: '#818cf8',
-                            backgroundColor: '#818cf8',
-                            pointBackgroundColor: '#0b0f19',
-                            pointBorderColor: '#818cf8',
-                            pointBorderWidth: 2.5,
-                            pointRadius: 5.5,
-                            pointHoverRadius: 8,
-                            borderWidth: 2.5,
-                            order: 2
-                        },
-                        {
                             label: 'Trạng thái hiện tại',
                             data: [{ x: +(1 / state.volume).toFixed(4), y: getCurrentPressure() }],
                             showLine: false,
-                            backgroundColor: '#ef4444',
-                            borderColor: '#ffffff',
+                            backgroundColor: '#ffffff',
+                            borderColor: '#ef4444',
                             borderWidth: 2,
                             pointRadius: 6.5,
                             order: 1
                         },
-                        {
-                            label: 'Đường thẳng P = k·(1/V)',
-                            data: generateTheoreticalPInvVPoints(),
-                            showLine: true,
-                            tension: 0,
-                            borderColor: 'rgba(148, 163, 184, 0.32)',
-                            borderDash: [5, 5],
-                            pointRadius: 0,
-                            borderWidth: 1.5,
-                            order: 3
-                        }
+                        { ...getDatasetBase(300), tension: 0 },
+                        getTheoryLinearDatasetBase(300, 240)
                     ]
                 },
                 options: {
@@ -1296,7 +1314,12 @@
                     animation: { duration: 250 },
                     plugins: {
                         legend: {
-                            labels: { boxWidth: 10, font: { size: 10 } }
+                            labels: { 
+                                boxWidth: 10, font: { size: 10 },
+                                filter: function(item, chart) {
+                                    return !item.text.includes('hiện tại');
+                                }
+                            }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -1331,24 +1354,65 @@
             if (!pvChart || !pinvChart) return;
             const V = state.volume;
             const P = getCurrentPressure(V);
-            pvChart.data.datasets[1].data = [{ x: V, y: +P.toFixed(2) }];
-            pinvChart.data.datasets[1].data = [{ x: +(1 / V).toFixed(4), y: +P.toFixed(2) }];
+            pvChart.data.datasets[0].data = [{ x: V, y: +P.toFixed(2) }];
+            pvChart.data.datasets[0].backgroundColor = temperatureColors[state.temperature];
+            
+            pinvChart.data.datasets[0].data = [{ x: +(1 / V).toFixed(4), y: +P.toFixed(2) }];
+            pinvChart.data.datasets[0].backgroundColor = temperatureColors[state.temperature];
+            
             pvChart.update('none');
             pinvChart.update('none');
+        }
+
+        function ensureDatasetExists(chart, temp, type = 'pv') {
+             let expData = chart.data.datasets.find(d => d.tempId === temp && !d.borderDash);
+             if (!expData) {
+                 expData = type === 'pv' ? getDatasetBase(temp) : { ...getDatasetBase(temp), tension: 0 };
+                 chart.data.datasets.push(expData);
+             }
+             
+             let theoryData = chart.data.datasets.find(d => d.tempId === temp && d.borderDash);
+             if (!theoryData) {
+                 const kConst = temp === 300 ? 240 : (temp === 1000 ? 800 : 1360);
+                 theoryData = type === 'pv' ? getTheoryDatasetBase(temp, kConst) : getTheoryLinearDatasetBase(temp, kConst);
+                 chart.data.datasets.push(theoryData);
+             }
+             return { expData, theoryData };
         }
 
         function refreshChartsRecordedData() {
             if (!pvChart || !pinvChart) return;
 
-            // Sort recorded points by Volume ascending for P-V chart
-            const sortedByV = [...state.measurements].sort((a, b) => a.V - b.V);
-            pvChart.data.datasets[0].data = sortedByV.map(m => ({ x: m.V, y: +m.P.toFixed(2) }));
-            pvChart.data.datasets[2].data = generateTheoreticalPVPoints();
+            // Clear all experimental data first, keep theory toggle state
+            pvChart.data.datasets.forEach(d => {
+                if (d.tempId) {
+                    d.hidden = (d.borderDash && !state.showTheoryCurve);
+                    if (!d.borderDash) d.data = []; 
+                }
+            });
+            pinvChart.data.datasets.forEach(d => {
+                if (d.tempId) {
+                    d.hidden = (d.borderDash && !state.showTheoryCurve);
+                    if (!d.borderDash) d.data = [];
+                }
+            });
 
-            // Sort recorded points by 1/V ascending for P-1/V chart
-            const sortedByInvV = [...state.measurements].sort((a, b) => a.invV - b.invV);
-            pinvChart.data.datasets[0].data = sortedByInvV.map(m => ({ x: +m.invV.toFixed(4), y: +m.P.toFixed(2) }));
-            pinvChart.data.datasets[2].data = generateTheoreticalPInvVPoints();
+            // Group measurements by temperature and populate datasets
+            const temps = [300, 1000, 1700];
+            temps.forEach(temp => {
+                const tempMeasures = state.measurements.filter(m => m.T === temp);
+                if (tempMeasures.length > 0 || state.recordedTemperatures.has(temp) || state.temperature === temp) {
+                    state.recordedTemperatures.add(temp); // Keep it visible once we switch to it or record it
+                    
+                    const { expData: pvExp } = ensureDatasetExists(pvChart, temp, 'pv');
+                    const sortedByV = [...tempMeasures].sort((a, b) => a.V - b.V);
+                    pvExp.data = sortedByV.map(m => ({ x: m.V, y: +m.P.toFixed(2) }));
+                    
+                    const { expData: pinvExp } = ensureDatasetExists(pinvChart, temp, 'pinv');
+                    const sortedByInvV = [...tempMeasures].sort((a, b) => a.invV - b.invV);
+                    pinvExp.data = sortedByInvV.map(m => ({ x: +m.invV.toFixed(4), y: +m.P.toFixed(2) }));
+                }
+            });
 
             pvChart.update();
             pinvChart.update();
@@ -1378,10 +1442,11 @@
             };
 
             state.measurements.push(entry);
+            state.recordedTemperatures.add(state.temperature);
             updatePhysicsReadouts();
             renderDataTable();
             refreshChartsRecordedData();
-            showToast(`Đã ghi Lần đo #${state.measurements.length}: V = ${V} cm³, P = ${P.toFixed(2)} atm`, 'success');
+            showToast(`Đã ghi Lần đo #${state.measurements.length}: T = ${state.temperature}K, V = ${V} cm³, P = ${P.toFixed(2)} atm`, 'success');
         }
 
         function deleteDataPoint(id) {
@@ -1412,21 +1477,35 @@
             }
 
             let html = '';
+            
+            // Render rows grouped by temperature if there are multiple
+            const sortedMeasurements = [...state.measurements].sort((a, b) => {
+                if (a.T !== b.T) return a.T - b.T;
+                return a.V - b.V;
+            });
+
+            let currentT = null;
             let sumPV = 0;
             let sumError = 0;
 
-            state.measurements.forEach((m, idx) => {
+            sortedMeasurements.forEach((m, idx) => {
+                if (currentT !== null && m.T !== currentT) {
+                     html += `<tr class="bg-slate-800/40"><td colspan="8" class="py-1 h-1"></td></tr>`;
+                }
+                currentT = m.T;
                 sumPV += m.PV;
                 sumError += m.errorPct;
 
                 const errBadgeClass = m.errorPct < 0.05
                     ? 'text-emerald-400'
                     : (m.errorPct <= 1.2 ? 'text-amber-300' : 'text-rose-400');
+                    
+                const tColorClass = m.T === 300 ? 'text-sky-300' : (m.T === 375 ? 'text-amber-400' : 'text-rose-400');
 
                 html += `
                     <tr class="hover:bg-slate-900/90 transition">
                         <td class="py-2.5 px-3 text-center font-bold text-slate-300">#${idx + 1}</td>
-                        <td class="py-2.5 px-3 text-center text-slate-400">${m.T} K</td>
+                        <td class="py-2.5 px-3 text-center font-bold ${tColorClass}">${m.T} K</td>
                         <td class="py-2.5 px-3 text-right font-semibold text-white">${m.V.toFixed(1)}</td>
                         <td class="py-2.5 px-3 text-right text-emerald-300">${m.invV.toFixed(4)}</td>
                         <td class="py-2.5 px-3 text-right font-semibold text-indigo-300">${m.P.toFixed(2)}</td>
@@ -1449,14 +1528,19 @@
             els.avgPVText.textContent = `${avgPV.toFixed(2)} atm·cm³`;
             els.avgErrorText.textContent = `${avgErr.toFixed(2)} %`;
 
+            const uniqueTemps = new Set(state.measurements.map(m => m.T)).size;
+
             if (n < 3) {
                 els.conclusionText.textContent = `Cần thêm ${3 - n} mẫu đo để kết luận`;
                 els.conclusionText.className = 'text-xs font-semibold text-amber-300';
+            } else if (uniqueTemps > 1) {
+                els.conclusionText.innerHTML = '<i class="fa-solid fa-layer-group mr-1"></i>Đã vẽ các đường đẳng nhiệt khác nhau';
+                els.conclusionText.className = 'text-xs font-semibold text-sky-400';
             } else if (avgErr <= 3.0) {
                 els.conclusionText.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>Nghiệm đúng: P·V ≈ hằng số';
                 els.conclusionText.className = 'text-xs font-semibold text-emerald-400';
             } else {
-                els.conclusionText.innerHTML = '<i class="fa-solid fa-circle-exclamation mr-1"></i>Khác biệt do thay đổi nhiệt độ T';
+                els.conclusionText.innerHTML = '<i class="fa-solid fa-circle-exclamation mr-1"></i>Sai số lớn do đo lường';
                 els.conclusionText.className = 'text-xs font-semibold text-amber-400';
             }
         }
@@ -1491,7 +1575,7 @@
             const avgErr = state.measurements.reduce((acc, m) => acc + m.errorPct, 0) / state.measurements.length;
 
             rows.push([]);
-            rows.push(['TRUNG BÌNH', state.temperature, '', '', '', avgPV.toFixed(2), avgErr.toFixed(2)]);
+            rows.push(['TRUNG BÌNH TOÀN BỘ', '', '', '', '', avgPV.toFixed(2), avgErr.toFixed(2)]);
 
             const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1499,7 +1583,7 @@
 
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Bao_Cao_Dinh_Luat_Boyle_${state.temperature}K.csv`;
+            link.download = `Bao_Cao_Dinh_Luat_Boyle.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -1565,6 +1649,18 @@
         els.resetBtn.addEventListener('click', () => {
             state.measurements = [];
             state.nextId = 1;
+            state.recordedTemperatures = new Set([state.temperature]); // Keep current temp alive in charts
+            
+            // Clean up chart datasets completely
+            const cleanDatasets = (chart) => {
+                const toKeep = [];
+                // Keep the "current state" pointer (index 0)
+                if (chart.data.datasets.length > 0) toKeep.push(chart.data.datasets[0]);
+                chart.data.datasets = toKeep;
+            };
+            cleanDatasets(pvChart);
+            cleanDatasets(pinvChart);
+            
             setVolume(60);
             renderDataTable();
             refreshChartsRecordedData();
@@ -1575,7 +1671,10 @@
         els.autoSampleBtn.addEventListener('click', () => {
             if (state.autoSampling) return;
             state.autoSampling = true;
-            state.measurements = [];
+            
+            // Only clear current temperature data, not everything
+            state.measurements = state.measurements.filter(m => m.T !== state.temperature);
+            
             renderDataTable();
             refreshChartsRecordedData();
 
@@ -1583,14 +1682,14 @@
             let stepIndex = 0;
 
             els.autoSampleBtn.classList.add('opacity-60', 'pointer-events-none');
-            showToast('Đang tự động dịch chuyển pít-tông và thu thập 6 mẫu chuẩn...', 'info');
+            showToast(`Đang lấy 6 mẫu tự động cho nhiệt độ ${state.temperature}K...`, 'info');
 
             const interval = setInterval(() => {
                 if (stepIndex >= sampleVolumes.length) {
                     clearInterval(interval);
                     state.autoSampling = false;
                     els.autoSampleBtn.classList.remove('opacity-60', 'pointer-events-none');
-                    showToast('Hoàn tất lấy 6 mẫu tự động! Hãy quan sát đường Hypebol và đường Tuyến tính.', 'success');
+                    showToast('Hoàn tất lấy 6 mẫu! Có thể chọn Nhiệt độ khác để vẽ thêm đường mới.', 'success');
                     return;
                 }
                 setVolume(sampleVolumes[stepIndex]);
@@ -1615,7 +1714,7 @@
                 rescaleParticleSpeeds();
                 updatePhysicsReadouts();
                 refreshChartsRecordedData();
-                showToast(`Đã chuyển sang đường đẳng nhiệt T = ${state.temperature} K (Hằng số k = ${state.kConstant})`, 'info');
+                showToast(`Đã chuyển sang đường đẳng nhiệt T = ${state.temperature} K`, 'info');
             });
         });
 
