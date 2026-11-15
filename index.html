@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phòng Thí Nghiệm Vật Lý Ảo - Kiểm Chứng Định Luật Boyle</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        lab: {
+                            bg: '#0b0f19',
+                            card: 'rgba(17, 24, 39, 0.78)',
+                            border: 'rgba(56, 189, 248, 0.22)',
+                            cyan: '#38bdf8',
+                            indigo: '#818cf8',
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            crimson: '#ef4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+        body {
+            background-color: #0b0f19;
+            background-image: 
+                radial-gradient(at 12% 15%, rgba(56, 189, 248, 0.12) 0px, transparent 45%),
+                radial-gradient(at 88% 10%, rgba(129, 140, 248, 0.12) 0px, transparent 45%),
+                radial-gradient(at 50% 90%, rgba(16, 185, 129, 0.07) 0px, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Card */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.76);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-panel-cyan {
+            border-color: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 25px -5px rgba(56, 189, 248, 0.15), inset 0 1px 0 0 rgba(56, 189, 248, 0.15);
+        }
+
+        .glass-panel-danger {
+            border-color: rgba(239, 68, 68, 0.6) !important;
+            box-shadow: 0 0 30px -4px rgba(239, 68, 68, 0.35), inset 0 0 15px rgba(239, 68, 68, 0.15) !important;
+        }
+
+        /* Custom Range Slider */
+        input[type="range"].lab-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, #ef4444 0%, #f59e0b 18%, #38bdf8 45%, #10b981 100%);
+            border-radius: 999px;
+            outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        input[type="range"].lab-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #f8fafc;
+            border: 3px solid #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.9);
+            cursor: grab;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        input[type="range"].lab-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.12);
+            box-shadow: 0 0 22px rgba(56, 189, 248, 1);
+        }
+
+        input[type="range"].lab-slider::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(0.96);
+        }
+
+        /* Camera Shake Effect for Critical Pressure */
+        @keyframes highPressureShake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-1.5px, 1px) rotate(-0.3deg); }
+            40% { transform: translate(1.5px, -1.5px) rotate(0.3deg); }
+            60% { transform: translate(-1.5px, -1px) rotate(-0.2deg); }
+            80% { transform: translate(1px, 1.5px) rotate(0.2deg); }
+        }
+
+        .critical-shake {
+            animation: highPressureShake 0.28s infinite;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Pulse Glow for Record Button */
+        @keyframes subtlePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(56, 189, 248, 0); }
+        }
+        .btn-pulse {
+            animation: subtlePulse 2.2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-slate-950">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Formula & Theory Modal -->
+    <div id="theoryModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+        <div class="glass-panel glass-panel-cyan max-w-2xl w-full rounded-2xl p-6 md:p-8 relative border border-sky-400/30 animate-fade-in">
+            <button id="closeTheoryBtn" class="absolute top-4 right-4 w-9 h-9 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-400">
+                    <i class="fa-solid fa-book-open-reader text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Cơ Sở Lý Thuyết: Định Luật Boyle</h3>
+                    <p class="text-xs text-slate-400">Vật lý Nhiệt học - Quá trình Đẳng nhiệt của Khí lý tưởng</p>
+                </div>
+            </div>
+
+            <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+                <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-700/80">
+                    <p class="font-semibold text-sky-400 mb-1">1. Phát biểu định luật:</p>
+                    <p>Trong quá trình đẳng nhiệt (nhiệt độ tuyệt đối <span class="font-mono text-white">T = hằng số</span>) của một lượng khí nhất định, áp suất <span class="font-mono text-white">P</span> tỉ lệ nghịch với thể tích <span class="font-mono text-white">V</span>.</p>
+                    <div class="mt-3 py-2 px-4 rounded-lg bg-sky-950/60 border border-sky-500/30 text-center font-mono text-base text-sky-300 font-bold">
+                        P &middot; V = const &nbsp;&rArr;&nbsp; P<sub>1</sub>V<sub>1</sub> = P<sub>2</sub>V<sub>2</sub> &nbsp;&rArr;&nbsp; P ~ 1/V
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800">
+                        <p class="font-semibold text-indigo-400 mb-1"><i class="fa-solid fa-atom mr-1.5"></i>Giải thích bằng Thuyết động học phân tử:</p>
+                        <p class="text-xs text-slate-300">Khi nhiệt độ <span class="font-mono">T</span> không đổi, động năng trung bình và vận tốc chuyển động nhiệt của các phân tử khí giữ nguyên. Khi nén pít-tông làm giảm thể tích <span class="font-mono">V</span>, mật độ phân tử khí <span class="font-mono">(&mu; = N/V)</span> tăng lên, khiến số va chạm của các phân tử lên một đơn vị diện tích thành bình trong mỗi giây tăng tỉ lệ thuận, làm áp suất <span class="font-mono">P</span> tăng.</p>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800">
+                        <p class="font-semibold text-emerald-400 mb-1"><i class="fa-solid fa-chart-line mr-1.5"></i>Phương pháp Tuyến tính hóa đồ thị:</p>
+                        <p class="text-xs text-slate-300">Trong hệ tọa độ <span class="font-mono">(V, P)</span>, đường đẳng nhiệt là một nhánh <strong>Hypebol</strong>. Bằng mắt thường rất khó khẳng định đường cong có đúng là hypebol hay không. Vì vậy trong thực nghiệm, ta vẽ thêm đồ thị <span class="font-mono">P</span> theo <span class="font-mono">1/V</span>: nếu các điểm thực nghiệm nằm trên một <strong>đường thẳng đi qua gốc tọa độ</strong> thì định luật Boyle được nghiệm đúng.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button id="closeTheoryBottomBtn" class="px-5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm transition">
+                    Đã hiểu, quay lại thí nghiệm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP HEADER -->
+    <header class="sticky top-0 z-30 glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-3">
+        <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-4">
+            <!-- Brand & Title -->
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-600 p-0.5 shadow-lg shadow-sky-500/20">
+                    <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-sky-400">
+                        <i class="fa-solid fa-flask-vial text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider font-bold rounded-full bg-sky-500/15 text-sky-400 border border-sky-400/30">Vật Lý 12 &bull; Nhiệt Học</span>
+                        <span class="hidden sm:inline-flex items-center gap-1 text-xs text-emerald-400 font-mono">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Online Lab
+                        </span>
+                    </div>
+                    <h1 class="text-lg md:text-xl font-extrabold tracking-tight text-white">
+                        PHÒNG THÍ NGHIỆM ĐỊNH LUẬT BOYLE
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Interactive Lab Parameters Bar -->
+            <div class="flex flex-wrap items-center gap-2.5 sm:gap-4">
+                <!-- Formula Badge -->
+                <div class="hidden xl:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs">
+                    <span class="text-slate-400">Công thức:</span>
+                    <span class="font-mono font-bold text-sky-400 text-sm">P &times; V = <span id="headerKValue">240</span></span>
+                    <span class="text-[11px] text-slate-400 font-mono">(atm&middot;cm&sup3;)</span>
+                </div>
+
+                <!-- Isothermal Temperature Selector -->
+                <div class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-700/80" title="Chọn nhiệt độ tuyệt đối T của bình điều nhiệt">
+                    <span class="text-xs text-slate-400 px-2.5 hidden sm:inline"><i class="fa-solid fa-temperature-half text-sky-400 mr-1"></i>Đẳng nhiệt:</span>
+                    <button data-temp="300" data-k="240" class="temp-btn px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition bg-sky-500 text-slate-950 shadow">
+                        300K (k=240)
+                    </button>
+                    <button data-temp="375" data-k="300" class="temp-btn px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition text-slate-300 hover:text-white">
+                        375K (k=300)
+                    </button>
+                    <button data-temp="450" data-k="360" class="temp-btn px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition text-slate-300 hover:text-white">
+                        450K (k=360)
+                    </button>
+                </div>
+
+                <!-- Real-world Error Toggle -->
+                <label class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 cursor-pointer hover:border-amber-400/50 transition select-none" title="Mô phỏng sai số ngẫu nhiên ±2% của cảm biến áp suất trong thực tế">
+                    <input type="checkbox" id="errorModeToggle" class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all relative peer-checked:bg-amber-500"></div>
+                    <span class="text-xs font-medium text-slate-300 peer-checked:text-amber-300">
+                        Sai số thực tế <span class="font-mono text-[11px] text-amber-400">(±2%)</span>
+                    </span>
+                </label>
+
+                <!-- Theory Modal Button -->
+                <button id="openTheoryBtn" class="px-3 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-400/30 text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span class="hidden sm:inline">Lý thuyết</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CRITICAL PRESSURE WARNING BANNER -->
+    <div id="criticalBanner" class="hidden bg-red-950/90 border-b border-red-500/60 px-4 py-2 text-center transition-all">
+        <div class="max-w-4xl mx-auto flex items-center justify-center gap-3 text-red-200 text-xs sm:text-sm font-semibold">
+            <i class="fa-solid fa-triangle-exclamation text-red-400 animate-bounce text-base"></i>
+            <span>CẢNH BÁO ÁP SUẤT TỚI HẠN! Mật độ phân tử khí quá cao (<span id="bannerPressureText" class="font-mono underline">20.0 atm</span>) — Nguy cơ vượt giới hạn bền của xi-lanh!</span>
+        </div>
+    </div>
+
+    <!-- MAIN WORKSPACE GRID -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- LEFT COLUMN: SIMULATION APPARATUS + GAUGE + CONTROLS (5 cols on lg) -->
+        <section class="lg:col-span-5 flex flex-col gap-5">
+            
+            <!-- Apparatus & Gauge Card -->
+            <div id="apparatusCard" class="glass-panel glass-panel-cyan rounded-2xl p-4 sm:p-5 transition-all duration-300">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                        <h2 class="text-sm sm:text-base font-bold uppercase tracking-wider text-slate-200">
+                            Mô Phỏng Xi-Lanh &amp; Áp Kế Bourdon
+                        </h2>
+                    </div>
+                    <span id="stateStatusBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        <i class="fa-solid fa-shield-check mr-1"></i>Trạng thái: An toàn
+                    </span>
+                </div>
+
+                <!-- Simulation Split View: Canvas Cylinder (Left) + Analog Gauge & Telemetry (Right) -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                    
+                    <!-- Interactive Cylinder Canvas -->
+                    <div class="sm:col-span-7 flex flex-col items-center">
+                        <div class="relative w-full bg-slate-950/85 rounded-xl border border-slate-800 p-2 flex flex-col items-center justify-center shadow-inner">
+                            <canvas id="cylinderCanvas" width="320" height="410" class="w-full max-w-[300px] h-auto cursor-ns-resize touch-none" title="Kéo pít-tông lên/xuống trực tiếp hoặc dùng thanh trượt bên dưới"></canvas>
+                            <div class="w-full flex items-center justify-between px-2 pt-1 text-[11px] text-slate-400 font-mono">
+                                <span><i class="fa-solid fa-hand-pointer text-sky-400 mr-1"></i>Kéo pít-tông được</span>
+                                <span id="thermostatLabel" class="text-sky-300">Bình điều nhiệt: 300 K</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analog Pressure Gauge & Live Readouts -->
+                    <div class="sm:col-span-5 flex flex-col gap-3">
+                        <!-- Custom SVG Bourdon Pressure Gauge -->
+                        <div class="bg-slate-950/85 rounded-xl border border-slate-800 p-3 flex flex-col items-center relative">
+                            <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">Áp kế (Manometer)</span>
+                            <svg id="pressureGaugeSvg" viewBox="0 0 200 165" class="w-full max-w-[185px] overflow-visible">
+                                <defs>
+                                    <linearGradient id="gaugeBezel" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#1e293b"/>
+                                        <stop offset="100%" stop-color="#0f172a"/>
+                                    </linearGradient>
+                                    <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                                        <feGaussianBlur stdDeviation="2.5" result="blur" />
+                                        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                                    </filter>
+                                </defs>
+
+                                <!-- Outer Bezel -->
+                                <circle cx="100" cy="95" r="78" fill="url(#gaugeBezel)" stroke="#334155" stroke-width="3"/>
+                                <circle cx="100" cy="95" r="71" fill="#090d16" stroke="#1e293b" stroke-width="1.5"/>
+
+                                <!-- Colored Arc Zones (Angle -210 deg to +30 deg, span 240 deg) -->
+                                <!-- Safe Zone: 0 to 12 atm -->
+                                <path d="M 41.1 129 A 68 68 0 0 1 100 27" fill="none" stroke="#10b981" stroke-width="6" stroke-linecap="round" opacity="0.8"/>
+                                <!-- Warning Zone: 12 to 24 atm -->
+                                <path d="M 100 27 A 68 68 0 0 1 154 54" fill="none" stroke="#f59e0b" stroke-width="6" opacity="0.85"/>
+                                <!-- Critical Zone: 24 to 36 atm -->
+                                <path d="M 154 54 A 68 68 0 0 1 158.9 129" fill="none" stroke="#ef4444" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+
+                                <!-- Tick marks generated dynamically via JS -->
+                                <g id="gaugeTicks"></g>
+
+                                <!-- Gauge Sub-label -->
+                                <text x="100" y="68" text-anchor="middle" fill="#64748b" font-size="8" font-family="JetBrains Mono" font-weight="600">PRESSURE (ATM)</text>
+
+                                <!-- Digital LCD Readout Box inside Gauge -->
+                                <rect x="64" y="118" width="72" height="24" rx="5" fill="#020617" stroke="#38bdf8" stroke-width="1" stroke-opacity="0.4"/>
+                                <text id="gaugeDigitalText" x="100" y="134" text-anchor="middle" fill="#38bdf8" font-size="12" font-family="JetBrains Mono" font-weight="700">4.00</text>
+
+                                <!-- Sweeping Needle -->
+                                <g id="gaugeNeedleGroup" transform="rotate(-90 100 95)">
+                                    <polygon points="97,95 100,33 103,95" fill="#ef4444" filter="url(#glowFilter)"/>
+                                    <polygon points="98.5,95 100,38 101.5,95" fill="#fca5a5"/>
+                                    <circle cx="100" cy="95" r="8" fill="#334155" stroke="#94a3b8" stroke-width="2"/>
+                                    <circle cx="100" cy="95" r="3" fill="#f8fafc"/>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- Telemetry Mini Cards -->
+                        <div class="grid grid-cols-2 sm:grid-cols-1 gap-2">
+                            <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                                <span class="text-xs text-slate-400">Thể tích <strong class="text-sky-400 font-mono">V</strong>:</span>
+                                <span class="font-mono font-bold text-sm text-white"><span id="readoutV">60.0</span> <small class="text-slate-400 font-normal">cm&sup3;</small></span>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                                <span class="text-xs text-slate-400">Áp suất <strong class="text-indigo-400 font-mono">P</strong>:</span>
+                                <div class="text-right">
+                                    <div class="font-mono font-bold text-sm text-indigo-300"><span id="readoutP">4.00</span> <small class="text-slate-400 font-normal">atm</small></div>
+                                    <div class="font-mono text-[10px] text-slate-500"><span id="readoutKpa">405.3</span> kPa</div>
+                                </div>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                                <span class="text-xs text-slate-400">Nghịch đảo <strong class="text-emerald-400 font-mono">1/V</strong>:</span>
+                                <span class="font-mono font-bold text-xs text-emerald-300"><span id="readoutInvV">0.0167</span> <small class="text-slate-400 font-normal">cm&#8315;&sup3;</small></span>
+                            </div>
+
+                            <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                                <span class="text-xs text-slate-400">Tích <strong class="text-amber-400 font-mono">P&middot;V</strong>:</span>
+                                <span class="font-mono font-bold text-sm text-amber-300"><span id="readoutPV">240.0</span></span>
+                            </div>
+
+                            <div class="col-span-2 sm:col-span-1 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between" title="Tần số va chạm của các phân tử khí lên thành bình">
+                                <span class="text-xs text-slate-400"><i class="fa-solid fa-burst text-sky-400 mr-1"></i>Mật độ va chạm:</span>
+                                <span class="font-mono font-semibold text-xs text-sky-300"><span id="readoutCollisions">320</span> <small class="text-slate-500">/s</small></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel Card -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-sky-400"></i>
+                        Bảng Điều Khiển Pít-Tông
+                    </h3>
+                    <span class="text-xs font-mono text-slate-400">Phạm vi: 10 &rarr; 120 cm&sup3;</span>
+                </div>
+
+                <!-- Volume Slider + Fine Controls -->
+                <div class="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/90 flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <label for="volumeSlider" class="text-xs font-medium text-slate-300">
+                            Điều chỉnh Thể tích khí (<span class="font-mono text-sky-400 font-bold">V</span>):
+                        </label>
+                        <div class="flex items-center gap-1.5">
+                            <button id="volMinusBtn" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-sm flex items-center justify-center transition" title="Giảm 1 cm³ (-)">
+                                <i class="fa-solid fa-minus text-xs"></i>
+                            </button>
+                            <span id="sliderValueBadge" class="px-2.5 py-0.5 rounded-md bg-sky-500/20 border border-sky-400/40 font-mono font-bold text-sky-300 text-sm min-w-[78px] text-center">
+                                60 cm&sup3;
+                            </span>
+                            <button id="volPlusBtn" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-sm flex items-center justify-center transition" title="Tăng 1 cm³ (+)">
+                                <i class="fa-solid fa-plus text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <input id="volumeSlider" type="range" min="10" max="120" step="1" value="60" class="lab-slider">
+
+                    <!-- Quick Volume Presets -->
+                    <div class="flex flex-wrap items-center justify-between gap-1 pt-1">
+                        <span class="text-[11px] text-slate-400 mr-1">Mốc nhanh:</span>
+                        <button data-vol="15" class="preset-vol-btn px-2 py-1 rounded bg-red-500/15 hover:bg-red-500/30 text-red-300 border border-red-500/30 font-mono text-[11px] transition">15</button>
+                        <button data-vol="20" class="preset-vol-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] transition">20</button>
+                        <button data-vol="30" class="preset-vol-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] transition">30</button>
+                        <button data-vol="40" class="preset-vol-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] transition">40</button>
+                        <button data-vol="60" class="preset-vol-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] transition">60</button>
+                        <button data-vol="80" class="preset-vol-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] transition">80</button>
+                        <button data-vol="100" class="preset-vol-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] transition">100</button>
+                        <button data-vol="120" class="preset-vol-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] transition">120</button>
+                    </div>
+                </div>
+
+                <!-- Primary Action Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                    <button id="recordBtn" class="sm:col-span-6 py-3 px-4 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-300 hover:to-indigo-400 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20 btn-pulse transition active:scale-[0.98]">
+                        <i class="fa-solid fa-plus-circle text-base"></i>
+                        <span>Ghi Số Liệu (Space)</span>
+                    </button>
+
+                    <button id="autoSampleBtn" class="sm:col-span-4 py-3 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition" title="Tự động di chuyển pít-tông và lấy 6 mẫu chuẩn">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Lấy 6 mẫu tự động</span>
+                    </button>
+
+                    <button id="resetBtn" class="sm:col-span-2 py-3 px-3 rounded-xl bg-slate-800/90 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-slate-700 hover:border-red-500/40 font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition" title="Làm mới toàn bộ bảng và đồ thị">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span class="sm:hidden">Làm mới</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: DUAL CHARTS + EXPERIMENTAL DATA TABLE (7 cols on lg) -->
+        <section class="lg:col-span-7 flex flex-col gap-5">
+            
+            <!-- Dual Graphs Card -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-sky-400 text-lg"></i>
+                        <div>
+                            <h2 class="text-sm sm:text-base font-bold uppercase tracking-wider text-slate-200">
+                                Đồ Thị Thực Nghiệm Đẳng Nhiệt
+                            </h2>
+                            <p class="text-[11px] text-slate-400">Điểm màu đỏ thể hiện trạng thái tức thời của pít-tông</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Show Theoretical Curve Checkbox -->
+                        <label class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-800 text-xs text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" id="showTheoryCurveToggle" checked class="rounded text-sky-500 focus:ring-0">
+                            <span>Đường lý thuyết</span>
+                        </label>
+
+                        <!-- Graph Layout Switcher -->
+                        <div class="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs">
+                            <button data-view="both" class="chart-tab-btn px-2.5 py-1 rounded-lg font-semibold bg-sky-500 text-slate-950 transition">
+                                Song song (2 Đồ thị)
+                            </button>
+                            <button data-view="pv" class="chart-tab-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white transition">
+                                P &ndash; V (Hypebol)
+                            </button>
+                            <button data-view="pinv" class="chart-tab-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white transition">
+                                P &ndash; 1/V (Tuyến tính)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Container Grid -->
+                <div id="chartsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Chart 1: P vs V (Hyperbola) -->
+                    <div id="pvChartWrapper" class="bg-slate-950/75 rounded-xl border border-slate-800/90 p-3 flex flex-col">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-sky-400 font-mono">1. ĐỒ THỊ P THEO V (ĐƯỜNG HYPEBOL)</span>
+                            <span class="text-[11px] font-mono text-slate-400">P = k / V</span>
+                        </div>
+                        <div class="relative w-full h-[250px] sm:h-[270px]">
+                            <canvas id="pvChartCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: P vs 1/V (Linearized) -->
+                    <div id="pinvChartWrapper" class="bg-slate-950/75 rounded-xl border border-slate-800/90 p-3 flex flex-col">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-indigo-400 font-mono">2. ĐỒ THỊ P THEO 1/V (TUYẾN TÍNH HÓA)</span>
+                            <span class="text-[11px] font-mono text-slate-400">P = k &middot; (1/V)</span>
+                        </div>
+                        <div class="relative w-full h-[250px] sm:h-[270px]">
+                            <canvas id="pinvChartCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experimental Data Table Card -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-table-list text-indigo-400 text-lg"></i>
+                        <div>
+                            <h2 class="text-sm sm:text-base font-bold uppercase tracking-wider text-slate-200">
+                                Bảng Kết Quả Thí Nghiệm (<span id="rowCountBadge" class="text-sky-400 font-mono">0</span> lần đo)
+                            </h2>
+                            <p class="text-[11px] text-slate-400">Số liệu tự động sắp xếp trên đồ thị theo thứ tự Thể tích tăng dần</p>
+                        </div>
+                    </div>
+
+                    <!-- Export & Copy Buttons -->
+                    <div class="flex items-center gap-2">
+                        <button id="copyTableBtn" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i class="fa-regular fa-copy text-sky-400"></i>
+                            <span>Sao chép</span>
+                        </button>
+                        <button id="exportCsvBtn" class="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-file-csv"></i>
+                            <span>Xuất Báo Cáo (.CSV)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Responsive Data Table -->
+                <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/75 max-h-[310px] overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 bg-slate-900/95 backdrop-blur text-[11px] font-mono uppercase text-slate-400 border-b border-slate-800 z-10">
+                            <tr>
+                                <th class="py-2.5 px-3 text-center">Lần đo</th>
+                                <th class="py-2.5 px-3 text-center">Nhiệt độ T</th>
+                                <th class="py-2.5 px-3 text-right">Thể tích V <span class="text-[10px] text-slate-500">(cm&sup3;)</span></th>
+                                <th class="py-2.5 px-3 text-right">1/V <span class="text-[10px] text-slate-500">(cm&#8315;&sup3;)</span></th>
+                                <th class="py-2.5 px-3 text-right">Áp suất P <span class="text-[10px] text-slate-500">(atm)</span></th>
+                                <th class="py-2.5 px-3 text-right text-sky-300">Tích P &times; V</th>
+                                <th class="py-2.5 px-3 text-right">Sai số &delta; <span class="text-[10px] text-slate-500">(%)</span></th>
+                                <th class="py-2.5 px-3 text-center">Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody" class="divide-y divide-slate-800/70 text-xs sm:text-sm font-mono">
+                            <!-- Empty State Row -->
+                            <tr id="emptyTableRow">
+                                <td colspan="8" class="py-10 text-center text-slate-500 font-sans">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <i class="fa-solid fa-clipboard-question text-2xl text-slate-600"></i>
+                                        <span>Chưa có dữ liệu đo. Hãy kéo thanh trượt và nhấn <strong>"Ghi Số Liệu"</strong> hoặc <strong>"Lấy 6 mẫu tự động"</strong>.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Statistical Summary & Conclusion Footer -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                        <span class="text-xs text-slate-400">Trung bình <strong class="text-sky-400 font-mono">P&middot;V</strong>:</span>
+                        <span id="avgPVText" class="font-mono font-bold text-sm text-sky-300">--</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                        <span class="text-xs text-slate-400">Sai số tỉ đối TB <strong class="text-amber-400 font-mono">&delta;<sub>TB</sub></strong>:</span>
+                        <span id="avgErrorText" class="font-mono font-bold text-sm text-amber-300">-- %</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                        <span class="text-xs text-slate-400">Đánh giá kết quả:</span>
+                        <span id="conclusionText" class="text-xs font-semibold text-slate-400">Chờ ghi số liệu...</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- APPLICATION JAVASCRIPT -->
+    <script>
+        /***********************************************************************
+         * 1. STATE MANAGEMENT & PHYSICS CONSTANTS
+         ***********************************************************************/
+        const state = {
+            temperature: 300,       // Kelvin (300K, 375K, 450K)
+            kConstant: 240,         // Theoretical P * V constant (240, 300, 360 atm*cm3)
+            volume: 60,             // Current Volume V in cm3 (10 to 120)
+            targetVolume: 60,       // Smoothly interpolated volume for canvas piston
+            realWorldError: false,  // ±2% realistic measurement error toggle
+            currentNoiseFactor: 1,  // Multiplier around 1.00 (e.g. 0.985 to 1.015)
+            showTheoryCurve: true,  // Toggle theoretical hyperbola/line on charts
+            measurements: [],       // Recorded rows: { id, index, T, kTheory, V, invV, P, PV, errorPct }
+            nextId: 1,
+            autoSampling: false,
+            collisionCounter: 0,
+            collisionsPerSec: 320
+        };
+
+        // DOM Elements
+        const els = {
+            headerKValue: document.getElementById('headerKValue'),
+            tempBtns: document.querySelectorAll('.temp-btn'),
+            errorModeToggle: document.getElementById('errorModeToggle'),
+            criticalBanner: document.getElementById('criticalBanner'),
+            bannerPressureText: document.getElementById('bannerPressureText'),
+            apparatusCard: document.getElementById('apparatusCard'),
+            stateStatusBadge: document.getElementById('stateStatusBadge'),
+            thermostatLabel: document.getElementById('thermostatLabel'),
+            cylinderCanvas: document.getElementById('cylinderCanvas'),
+            gaugeTicks: document.getElementById('gaugeTicks'),
+            gaugeNeedleGroup: document.getElementById('gaugeNeedleGroup'),
+            gaugeDigitalText: document.getElementById('gaugeDigitalText'),
+            readoutV: document.getElementById('readoutV'),
+            readoutP: document.getElementById('readoutP'),
+            readoutKpa: document.getElementById('readoutKpa'),
+            readoutInvV: document.getElementById('readoutInvV'),
+            readoutPV: document.getElementById('readoutPV'),
+            readoutCollisions: document.getElementById('readoutCollisions'),
+            volumeSlider: document.getElementById('volumeSlider'),
+            sliderValueBadge: document.getElementById('sliderValueBadge'),
+            volMinusBtn: document.getElementById('volMinusBtn'),
+            volPlusBtn: document.getElementById('volPlusBtn'),
+            presetVolBtns: document.querySelectorAll('.preset-vol-btn'),
+            recordBtn: document.getElementById('recordBtn'),
+            autoSampleBtn: document.getElementById('autoSampleBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            showTheoryCurveToggle: document.getElementById('showTheoryCurveToggle'),
+            chartTabBtns: document.querySelectorAll('.chart-tab-btn'),
+            chartsGrid: document.getElementById('chartsGrid'),
+            pvChartWrapper: document.getElementById('pvChartWrapper'),
+            pinvChartWrapper: document.getElementById('pinvChartWrapper'),
+            rowCountBadge: document.getElementById('rowCountBadge'),
+            dataTableBody: document.getElementById('dataTableBody'),
+            avgPVText: document.getElementById('avgPVText'),
+            avgErrorText: document.getElementById('avgErrorText'),
+            conclusionText: document.getElementById('conclusionText'),
+            copyTableBtn: document.getElementById('copyTableBtn'),
+            exportCsvBtn: document.getElementById('exportCsvBtn'),
+            toastContainer: document.getElementById('toastContainer'),
+            theoryModal: document.getElementById('theoryModal'),
+            openTheoryBtn: document.getElementById('openTheoryBtn'),
+            closeTheoryBtn: document.getElementById('closeTheoryBtn'),
+            closeTheoryBottomBtn: document.getElementById('closeTheoryBottomBtn')
+        };
+
+        /***********************************************************************
+         * 2. TOAST NOTIFICATION HELPER (No alert/confirm used)
+         ***********************************************************************/
+        function showToast(message, type = 'info') {
+            const colors = {
+                info: 'border-sky-400/50 bg-slate-900/95 text-sky-200',
+                success: 'border-emerald-400/50 bg-slate-900/95 text-emerald-200',
+                warning: 'border-amber-400/50 bg-slate-900/95 text-amber-200',
+                danger: 'border-red-500/60 bg-red-950/95 text-red-200'
+            };
+            const icons = {
+                info: 'fa-circle-info text-sky-400',
+                success: 'fa-circle-check text-emerald-400',
+                warning: 'fa-triangle-exclamation text-amber-400',
+                danger: 'fa-Radiation text-red-400'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${colors[type] || colors.info}`;
+            toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} text-base"></i><span>${message}</span>`;
+            els.toastContainer.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        /***********************************************************************
+         * 3. PHYSICS CALCULATIONS
+         ***********************************************************************/
+        function generateNoiseFactor() {
+            if (!state.realWorldError) return 1.0;
+            // Random error within [-2.0%, +2.0%]
+            const randomPct = (Math.random() * 4 - 2) / 100;
+            return 1 + randomPct;
+        }
+
+        function getCurrentPressure(vol = state.volume) {
+            const idealP = state.kConstant / vol;
+            return idealP * state.currentNoiseFactor;
+        }
+
+        function updatePhysicsReadouts() {
+            const V = state.volume;
+            const P = getCurrentPressure(V);
+            const invV = 1 / V;
+            const PV = P * V;
+            const kPa = P * 101.325;
+
+            // Update DOM text
+            els.readoutV.textContent = V.toFixed(1);
+            els.readoutP.textContent = P.toFixed(2);
+            els.readoutKpa.textContent = kPa.toFixed(1);
+            els.readoutInvV.textContent = invV.toFixed(4);
+            els.readoutPV.textContent = PV.toFixed(1);
+            els.sliderValueBadge.innerHTML = `${V} cm&sup3;`;
+            els.volumeSlider.value = V;
+
+            // Update Analog Bourdon Gauge (Range: 0 to 36 atm -> -210 deg to +30 deg, or rotate from -120 to +120)
+            // Note: In our SVG, needle points straight UP (0 deg = 12 o'clock = 18 atm).
+            // So 0 atm = -120 deg, 36 atm = +120 deg.
+            const maxGaugeP = 36;
+            const clampedP = Math.min(maxGaugeP, Math.max(0, P));
+            const angleDeg = -120 + (clampedP / maxGaugeP) * 240;
+            els.gaugeNeedleGroup.setAttribute('transform', `rotate(${angleDeg.toFixed(1)} 100 95)`);
+            els.gaugeDigitalText.textContent = P.toFixed(2);
+
+            // Critical Pressure Warning Check (V <= 18 cm3 or P >= 15 atm)
+            const isCritical = V <= 18 || P >= 15;
+            const isElevated = !isCritical && (V <= 28 || P >= 10);
+
+            if (isCritical) {
+                els.criticalBanner.classList.remove('hidden');
+                els.bannerPressureText.textContent = `${P.toFixed(2)} atm`;
+                els.apparatusCard.classList.add('glass-panel-danger', 'critical-shake');
+                els.stateStatusBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse';
+                els.stateStatusBadge.innerHTML = '<i class="fa-solid fa-radiation mr-1"></i>Quá tải áp suất!';
+                els.gaugeDigitalText.setAttribute('fill', '#ef4444');
+            } else if (isElevated) {
+                els.criticalBanner.classList.add('hidden');
+                els.apparatusCard.classList.remove('glass-panel-danger', 'critical-shake');
+                els.stateStatusBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30';
+                els.stateStatusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i>Áp suất cao';
+                els.gaugeDigitalText.setAttribute('fill', '#f59e0b');
+            } else {
+                els.criticalBanner.classList.add('hidden');
+                els.apparatusCard.classList.remove('glass-panel-danger', 'critical-shake');
+                els.stateStatusBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+                els.stateStatusBadge.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i>Trạng thái: An toàn';
+                els.gaugeDigitalText.setAttribute('fill', '#38bdf8');
+            }
+
+            // Update Live Cursor on Charts
+            updateChartsLivePoint();
+        }
+
+        /***********************************************************************
+         * 4. BUILD SVG ANALOG GAUGE TICKS
+         ***********************************************************************/
+        function initAnalogGaugeTicks() {
+            const maxP = 36;
+            const cx = 100, cy = 95;
+            let svgHtml = '';
+
+            for (let p = 0; p <= maxP; p += 2) {
+                // Angle in radians: 0 atm is at -210 deg (i.e. 150 deg in standard math, or -120 deg from top)
+                const degFromTop = -120 + (p / maxP) * 240;
+                const rad = (degFromTop - 90) * (Math.PI / 180);
+                const isMajor = p % 6 === 0;
+
+                const rOuter = 64;
+                const rInner = isMajor ? 54 : 59;
+                const x1 = cx + rOuter * Math.cos(rad);
+                const y1 = cy + rOuter * Math.sin(rad);
+                const x2 = cx + rInner * Math.cos(rad);
+                const y2 = cy + rInner * Math.sin(rad);
+
+                const strokeColor = p >= 24 ? '#ef4444' : (p >= 12 ? '#f59e0b' : '#94a3b8');
+                svgHtml += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${strokeColor}" stroke-width="${isMajor ? 2 : 1}" />`;
+
+                if (isMajor) {
+                    const rText = 44;
+                    const tx = cx + rText * Math.cos(rad);
+                    const ty = cy + rText * Math.sin(rad) + 3;
+                    svgHtml += `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" fill="#cbd5e1" font-size="8.5" font-family="JetBrains Mono" font-weight="600">${p}</text>`;
+                }
+            }
+            els.gaugeTicks.innerHTML = svgHtml;
+        }
+
+        /***********************************************************************
+         * 5. INTERACTIVE CYLINDER, PISTON & GAS MOLECULES CANVAS SIMULATION
+         ***********************************************************************/
+        const ctx = els.cylinderCanvas.getContext('2d');
+        const CYL = {
+            x: 85,
+            topY: 48,
+            bottomY: 348,
+            width: 145,
+            get height() { return this.bottomY - this.topY; }, // 300px = 120 cm3 (2.5px per cm3)
+            maxVol: 120
+        };
+
+        // Create 56 Gas Particles + Wall Impact Ripples
+        const NUM_PARTICLES = 56;
+        const particles = [];
+        const ripples = [];
+
+        function getSpeedMultiplier() {
+            // Speed proportional to sqrt(T)
+            return Math.sqrt(state.temperature / 300) * 2.35;
+        }
+
+        function initParticles() {
+            particles.length = 0;
+            const pistonY = getPistonY(state.volume);
+            for (let i = 0; i < NUM_PARTICLES; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = getSpeedMultiplier() * (0.75 + Math.random() * 0.5);
+                particles.push({
+                    x: CYL.x + 8 + Math.random() * (CYL.width - 16),
+                    y: pistonY + 24 + Math.random() * (CYL.bottomY - pistonY - 32),
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    r: 3.2
+                });
+            }
+        }
+
+        function rescaleParticleSpeeds() {
+            const targetSpeed = getSpeedMultiplier();
+            particles.forEach(p => {
+                const currentMag = Math.hypot(p.vx, p.vy) || 1;
+                const factor = (targetSpeed * (0.8 + Math.random() * 0.4)) / currentMag;
+                p.vx *= factor;
+                p.vy *= factor;
+            });
+        }
+
+        function getPistonY(vol) {
+            // Bottom of cylinder is 0 cm3 (CYL.bottomY = 348)
+            // Top of scale is 120 cm3 (CYL.topY = 48)
+            // Gas chamber height = (vol / 120) * 300
+            const gasHeight = (vol / CYL.maxVol) * CYL.height;
+            return CYL.bottomY - gasHeight;
+        }
+
+        function addWallRipple(x, y) {
+            if (ripples.length < 28) {
+                ripples.push({ x, y, r: 2, alpha: 0.75 });
+            }
+            state.collisionCounter++;
+        }
+
+        // Track collision rate per second
+        setInterval(() => {
+            // Theoretical collision density scales with P / sqrt(T)
+            const P = getCurrentPressure();
+            const theoreticalRate = Math.round(P * 80 + (Math.random() * 14 - 7));
+            state.collisionsPerSec = Math.max(15, theoreticalRate);
+            els.readoutCollisions.textContent = state.collisionsPerSec;
+            state.collisionCounter = 0;
+        }, 450);
+
+        function renderCylinderSimulation() {
+            // Smooth interpolation of piston position
+            state.targetVolume += (state.volume - state.targetVolume) * 0.22;
+            const currentVol = state.targetVolume;
+            const pistonFaceY = getPistonY(currentVol); // Bottom face of piston touching the gas
+            const P = getCurrentPressure(currentVol);
+
+            ctx.clearRect(0, 0, els.cylinderCanvas.width, els.cylinderCanvas.height);
+
+            // 1. Draw Manometer Connection Pipe (Top-Right of Cylinder Base to Gauge)
+            ctx.save();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(CYL.x + CYL.width, CYL.bottomY - 14);
+            ctx.lineTo(285, CYL.bottomY - 14);
+            ctx.lineTo(285, 115);
+            ctx.lineTo(315, 115);
+            ctx.stroke();
+
+            ctx.strokeStyle = P >= 15 ? '#ef4444' : '#38bdf8';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(CYL.x + CYL.width, CYL.bottomY - 14);
+            ctx.lineTo(285, CYL.bottomY - 14);
+            ctx.lineTo(285, 115);
+            ctx.lineTo(315, 115);
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Draw Isothermal Water Bath / Thermal Jacket at Base
+            ctx.save();
+            const bathGrad = ctx.createLinearGradient(0, CYL.bottomY - 25, 0, CYL.bottomY + 35);
+            if (state.temperature === 300) {
+                bathGrad.addColorStop(0, 'rgba(56, 189, 248, 0.08)');
+                bathGrad.addColorStop(1, 'rgba(56, 189, 248, 0.28)');
+            } else if (state.temperature === 375) {
+                bathGrad.addColorStop(0, 'rgba(245, 158, 11, 0.10)');
+                bathGrad.addColorStop(1, 'rgba(245, 158, 11, 0.30)');
+            } else {
+                bathGrad.addColorStop(0, 'rgba(239, 68, 68, 0.12)');
+                bathGrad.addColorStop(1, 'rgba(239, 68, 68, 0.34)');
+            }
+            ctx.fillStyle = bathGrad;
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(CYL.x - 22, CYL.bottomY - 20, CYL.width + 44, 52, 10);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '600 10px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`ĐIỀU NHIỆT ĐẲNG NHIỆT: T = ${state.temperature} K`, CYL.x + CYL.width / 2, CYL.bottomY + 23);
+            ctx.restore();
+
+            // 3. Draw Gas Chamber Background Glow (Changes color as pressure rises)
+            ctx.save();
+            const pressureRatio = Math.min(1, Math.max(0, (P - 2) / 22));
+            const r = Math.round(56 + pressureRatio * (239 - 56));
+            const g = Math.round(189 - pressureRatio * 125);
+            const b = Math.round(248 - pressureRatio * 180);
+
+            const gasGrad = ctx.createLinearGradient(CYL.x, pistonFaceY, CYL.x, CYL.bottomY);
+            gasGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${0.14 + pressureRatio * 0.28})`);
+            gasGrad.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${0.06 + pressureRatio * 0.18})`);
+            ctx.fillStyle = gasGrad;
+            ctx.fillRect(CYL.x, pistonFaceY, CYL.width, CYL.bottomY - pistonFaceY);
+            ctx.restore();
+
+            // 4. Update & Draw Gas Molecules (Brownian Motion)
+            const topBound = pistonFaceY + 4;
+            const bottomBound = CYL.bottomY - 4;
+            const leftBound = CYL.x + 4;
+            const rightBound = CYL.x + CYL.width - 4;
+
+            particles.forEach(pt => {
+                pt.x += pt.vx;
+                pt.y += pt.vy;
+
+                // Left / Right cylinder wall collisions
+                if (pt.x < leftBound) {
+                    pt.x = leftBound;
+                    pt.vx = Math.abs(pt.vx);
+                    addWallRipple(CYL.x, pt.y);
+                } else if (pt.x > rightBound) {
+                    pt.x = rightBound;
+                    pt.vx = -Math.abs(pt.vx);
+                    addWallRipple(CYL.x + CYL.width, pt.y);
+                }
+
+                // Piston face (Top) / Cylinder bottom collisions
+                if (pt.y < topBound) {
+                    pt.y = topBound + Math.random() * 3;
+                    pt.vy = Math.abs(pt.vy);
+                    addWallRipple(pt.x, pistonFaceY);
+                } else if (pt.y > bottomBound) {
+                    pt.y = bottomBound;
+                    pt.vy = -Math.abs(pt.vy);
+                    addWallRipple(pt.x, CYL.bottomY);
+                }
+
+                // Safety clamp if piston moves rapidly
+                if (pt.y < topBound) pt.y = topBound + 2;
+                if (pt.y > bottomBound) pt.y = bottomBound - 2;
+
+                // Draw molecule
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
+                ctx.fillStyle = P >= 15 ? '#fca5a5' : (state.temperature === 450 ? '#fde047' : '#38bdf8');
+                ctx.shadowColor = P >= 15 ? '#ef4444' : '#38bdf8';
+                ctx.shadowBlur = 6;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            // 5. Draw Wall Collision Ripples
+            for (let i = ripples.length - 1; i >= 0; i--) {
+                const rp = ripples[i];
+                ctx.beginPath();
+                ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+                ctx.strokeStyle = P >= 15 ? `rgba(239, 68, 68, ${rp.alpha})` : `rgba(56, 189, 248, ${rp.alpha})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                rp.r += 0.65;
+                rp.alpha -= 0.06;
+                if (rp.alpha <= 0) ripples.splice(i, 1);
+            }
+
+            // 6. Draw Metallic Piston Rod & Piston Head
+            const pistonHeight = 22;
+            const pistonTopY = pistonFaceY - pistonHeight;
+
+            // Piston Rod
+            const rodWidth = 20;
+            const rodX = CYL.x + (CYL.width - rodWidth) / 2;
+            const rodGrad = ctx.createLinearGradient(rodX, 0, rodX + rodWidth, 0);
+            rodGrad.addColorStop(0, '#475569');
+            rodGrad.addColorStop(0.5, '#cbd5e1');
+            rodGrad.addColorStop(1, '#334155');
+            ctx.fillStyle = rodGrad;
+            ctx.fillRect(rodX, 12, rodWidth, Math.max(0, pistonTopY - 12));
+
+            // Top T-Handle of Piston
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.roundRect(CYL.x + 28, 6, CYL.width - 56, 10, 5);
+            ctx.fill();
+
+            // Piston Head Body
+            const headGrad = ctx.createLinearGradient(CYL.x, pistonTopY, CYL.x + CYL.width, pistonTopY);
+            headGrad.addColorStop(0, '#334155');
+            headGrad.addColorStop(0.5, '#94a3b8');
+            headGrad.addColorStop(1, '#1e293b');
+            ctx.fillStyle = headGrad;
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.5;
+            ctx.fillRect(CYL.x + 2, pistonTopY, CYL.width - 4, pistonHeight);
+            ctx.strokeRect(CYL.x + 2, pistonTopY, CYL.width - 4, pistonHeight);
+
+            // Rubber O-Ring Seals on Piston
+            ctx.fillStyle = '#0ea5e9';
+            ctx.fillRect(CYL.x + 1, pistonTopY + 4, CYL.width - 2, 3);
+            ctx.fillRect(CYL.x + 1, pistonFaceY - 6, CYL.width - 2, 3);
+
+            // Force Vector Arrow on Piston when compressed
+            if (currentVol < 80) {
+                ctx.save();
+                ctx.strokeStyle = '#f43f5e';
+                ctx.fillStyle = '#f43f5e';
+                ctx.lineWidth = 2.5;
+                const arrowX = CYL.x + CYL.width / 2;
+                const arrowBottomY = pistonTopY - 4;
+                const arrowLen = Math.min(36, 12 + (80 - currentVol) * 0.4);
+                ctx.beginPath();
+                ctx.moveTo(arrowX, arrowBottomY - arrowLen);
+                ctx.lineTo(arrowX, arrowBottomY);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(arrowX - 5, arrowBottomY - 6);
+                ctx.lineTo(arrowX + 5, arrowBottomY - 6);
+                ctx.lineTo(arrowX, arrowBottomY + 1);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 7. Draw Cylinder Glass Walls & Graduated Volume Markings (0 to 120 cm3)
+            ctx.save();
+            ctx.strokeStyle = P >= 15 ? '#ef4444' : '#94a3b8';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(CYL.x, CYL.topY - 12);
+            ctx.lineTo(CYL.x, CYL.bottomY);
+            ctx.lineTo(CYL.x + CYL.width, CYL.bottomY);
+            ctx.lineTo(CYL.x + CYL.width, CYL.topY - 12);
+            ctx.stroke();
+
+            // Glass Specular Highlight
+            const glassShine = ctx.createLinearGradient(CYL.x, 0, CYL.x + 24, 0);
+            glassShine.addColorStop(0, 'rgba(255, 255, 255, 0.14)');
+            glassShine.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = glassShine;
+            ctx.fillRect(CYL.x + 2, CYL.topY - 8, 22, CYL.height + 6);
+
+            // Graduated Ruler Markings on Left Wall
+            ctx.textAlign = 'right';
+            ctx.font = '600 10px "JetBrains Mono", monospace';
+            for (let v = 0; v <= 120; v += 10) {
+                const y = getPistonY(v);
+                const isMajor = v % 20 === 0;
+                ctx.strokeStyle = isMajor ? '#e2e8f0' : '#64748b';
+                ctx.lineWidth = isMajor ? 1.8 : 1;
+                ctx.beginPath();
+                ctx.moveTo(CYL.x, y);
+                ctx.lineTo(CYL.x + (isMajor ? 14 : 8), y);
+                ctx.stroke();
+
+                if (isMajor) {
+                    ctx.fillStyle = Math.abs(v - currentVol) < 6 ? '#38bdf8' : '#94a3b8';
+                    ctx.fillText(`${v}`, CYL.x - 8, y + 3.5);
+                }
+            }
+
+            // Current Volume Pointer Flag on Right Wall
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.moveTo(CYL.x + CYL.width + 2, pistonFaceY);
+            ctx.lineTo(CYL.x + CYL.width + 10, pistonFaceY - 5);
+            ctx.lineTo(CYL.x + CYL.width + 10, pistonFaceY + 5);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.font = '700 11px "JetBrains Mono", monospace';
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText(`V=${Math.round(currentVol)}`, CYL.x + CYL.width + 13, pistonFaceY + 4);
+            ctx.restore();
+
+            requestAnimationFrame(renderCylinderSimulation);
+        }
+
+        // Direct Dragging on Canvas Piston
+        let isDraggingPiston = false;
+        function updateVolumeFromCanvasPointer(clientY) {
+            const rect = els.cylinderCanvas.getBoundingClientRect();
+            const scaleY = els.cylinderCanvas.height / rect.height;
+            const canvasY = (clientY - rect.top) * scaleY;
+            const rawVol = ((CYL.bottomY - canvasY) / CYL.height) * CYL.maxVol;
+            const clampedVol = Math.round(Math.min(120, Math.max(10, rawVol)));
+            if (clampedVol !== state.volume) {
+                setVolume(clampedVol);
+            }
+        }
+
+        els.cylinderCanvas.addEventListener('pointerdown', (e) => {
+            isDraggingPiston = true;
+            els.cylinderCanvas.setPointerCapture(e.pointerId);
+            updateVolumeFromCanvasPointer(e.clientY);
+        });
+        els.cylinderCanvas.addEventListener('pointermove', (e) => {
+            if (!isDraggingPiston) return;
+            updateVolumeFromCanvasPointer(e.clientY);
+        });
+        els.cylinderCanvas.addEventListener('pointerup', () => {
+            isDraggingPiston = false;
+        });
+
+        /***********************************************************************
+         * 6. DUAL CHART.JS INITIALIZATION & UPDATES
+         ***********************************************************************/
+        let pvChart = null;
+        let pinvChart = null;
+
+        function generateTheoreticalPVPoints() {
+            if (!state.showTheoryCurve) return [];
+            const pts = [];
+            for (let v = 10; v <= 120; v += 2) {
+                pts.push({ x: v, y: +(state.kConstant / v).toFixed(3) });
+            }
+            return pts;
+        }
+
+        function generateTheoreticalPInvVPoints() {
+            if (!state.showTheoryCurve) return [];
+            return [
+                { x: 0, y: 0 },
+                { x: 0.105, y: +(state.kConstant * 0.105).toFixed(3) }
+            ];
+        }
+
+        function initCharts() {
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = "'JetBrains Mono', monospace";
+
+            // 1. P - V Chart (Hyperbola)
+            const pvCtx = document.getElementById('pvChartCanvas').getContext('2d');
+            pvChart = new Chart(pvCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Điểm thực nghiệm (V, P)',
+                            data: [],
+                            showLine: true,
+                            tension: 0.35,
+                            borderColor: '#38bdf8',
+                            backgroundColor: '#38bdf8',
+                            pointBackgroundColor: '#0b0f19',
+                            pointBorderColor: '#38bdf8',
+                            pointBorderWidth: 2.5,
+                            pointRadius: 5.5,
+                            pointHoverRadius: 8,
+                            borderWidth: 2.5,
+                            order: 2
+                        },
+                        {
+                            label: 'Trạng thái hiện tại',
+                            data: [{ x: state.volume, y: getCurrentPressure() }],
+                            showLine: false,
+                            backgroundColor: '#ef4444',
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            pointRadius: 6.5,
+                            order: 1
+                        },
+                        {
+                            label: 'Đường Hypebol lý thuyết',
+                            data: generateTheoreticalPVPoints(),
+                            showLine: true,
+                            tension: 0.4,
+                            borderColor: 'rgba(148, 163, 184, 0.32)',
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            borderWidth: 1.5,
+                            order: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 250 },
+                    plugins: {
+                        legend: {
+                            labels: { boxWidth: 10, font: { size: 10 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            borderColor: 'rgba(56, 189, 248, 0.4)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: (ctx) => ` V = ${ctx.parsed.x} cm³  |  P = ${ctx.parsed.y.toFixed(2)} atm`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            min: 0,
+                            max: 125,
+                            title: { display: true, text: 'Thể tích V (cm³)', color: '#cbd5e1', font: { size: 11, weight: 'bold' } },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            min: 0,
+                            max: 38,
+                            title: { display: true, text: 'Áp suất P (atm)', color: '#cbd5e1', font: { size: 11, weight: 'bold' } },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // 2. P - 1/V Chart (Linear)
+            const pinvCtx = document.getElementById('pinvChartCanvas').getContext('2d');
+            pinvChart = new Chart(pinvCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Điểm thực nghiệm (1/V, P)',
+                            data: [],
+                            showLine: true,
+                            tension: 0,
+                            borderColor: '#818cf8',
+                            backgroundColor: '#818cf8',
+                            pointBackgroundColor: '#0b0f19',
+                            pointBorderColor: '#818cf8',
+                            pointBorderWidth: 2.5,
+                            pointRadius: 5.5,
+                            pointHoverRadius: 8,
+                            borderWidth: 2.5,
+                            order: 2
+                        },
+                        {
+                            label: 'Trạng thái hiện tại',
+                            data: [{ x: +(1 / state.volume).toFixed(4), y: getCurrentPressure() }],
+                            showLine: false,
+                            backgroundColor: '#ef4444',
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            pointRadius: 6.5,
+                            order: 1
+                        },
+                        {
+                            label: 'Đường thẳng P = k·(1/V)',
+                            data: generateTheoreticalPInvVPoints(),
+                            showLine: true,
+                            tension: 0,
+                            borderColor: 'rgba(148, 163, 184, 0.32)',
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            borderWidth: 1.5,
+                            order: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 250 },
+                    plugins: {
+                        legend: {
+                            labels: { boxWidth: 10, font: { size: 10 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            borderColor: 'rgba(129, 140, 248, 0.4)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: (ctx) => ` 1/V = ${ctx.parsed.x.toFixed(4)} cm⁻³  |  P = ${ctx.parsed.y.toFixed(2)} atm`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            min: 0,
+                            max: 0.105,
+                            title: { display: true, text: 'Nghịch đảo thể tích 1/V (cm⁻³)', color: '#cbd5e1', font: { size: 11, weight: 'bold' } },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            min: 0,
+                            max: 38,
+                            title: { display: true, text: 'Áp suất P (atm)', color: '#cbd5e1', font: { size: 11, weight: 'bold' } },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartsLivePoint() {
+            if (!pvChart || !pinvChart) return;
+            const V = state.volume;
+            const P = getCurrentPressure(V);
+            pvChart.data.datasets[1].data = [{ x: V, y: +P.toFixed(2) }];
+            pinvChart.data.datasets[1].data = [{ x: +(1 / V).toFixed(4), y: +P.toFixed(2) }];
+            pvChart.update('none');
+            pinvChart.update('none');
+        }
+
+        function refreshChartsRecordedData() {
+            if (!pvChart || !pinvChart) return;
+
+            // Sort recorded points by Volume ascending for P-V chart
+            const sortedByV = [...state.measurements].sort((a, b) => a.V - b.V);
+            pvChart.data.datasets[0].data = sortedByV.map(m => ({ x: m.V, y: +m.P.toFixed(2) }));
+            pvChart.data.datasets[2].data = generateTheoreticalPVPoints();
+
+            // Sort recorded points by 1/V ascending for P-1/V chart
+            const sortedByInvV = [...state.measurements].sort((a, b) => a.invV - b.invV);
+            pinvChart.data.datasets[0].data = sortedByInvV.map(m => ({ x: +m.invV.toFixed(4), y: +m.P.toFixed(2) }));
+            pinvChart.data.datasets[2].data = generateTheoreticalPInvVPoints();
+
+            pvChart.update();
+            pinvChart.update();
+        }
+
+        /***********************************************************************
+         * 7. DATA RECORDING, TABLE RENDERING & CSV EXPORT
+         ***********************************************************************/
+        function recordDataPoint() {
+            const V = state.volume;
+            // Re-roll slight sensor noise on each measurement if error mode is enabled
+            state.currentNoiseFactor = generateNoiseFactor();
+            const P = getCurrentPressure(V);
+            const invV = 1 / V;
+            const PV = P * V;
+            const errorPct = (Math.abs(PV - state.kConstant) / state.kConstant) * 100;
+
+            const entry = {
+                id: state.nextId++,
+                T: state.temperature,
+                kTheory: state.kConstant,
+                V: V,
+                invV: invV,
+                P: P,
+                PV: PV,
+                errorPct: errorPct
+            };
+
+            state.measurements.push(entry);
+            updatePhysicsReadouts();
+            renderDataTable();
+            refreshChartsRecordedData();
+            showToast(`Đã ghi Lần đo #${state.measurements.length}: V = ${V} cm³, P = ${P.toFixed(2)} atm`, 'success');
+        }
+
+        function deleteDataPoint(id) {
+            state.measurements = state.measurements.filter(m => m.id !== id);
+            renderDataTable();
+            refreshChartsRecordedData();
+            showToast('Đã xóa dòng số liệu khỏi bảng.', 'info');
+        }
+
+        function renderDataTable() {
+            els.rowCountBadge.textContent = state.measurements.length;
+
+            if (state.measurements.length === 0) {
+                els.dataTableBody.innerHTML = `
+                    <tr id="emptyTableRow">
+                        <td colspan="8" class="py-10 text-center text-slate-500 font-sans">
+                            <div class="flex flex-col items-center gap-2">
+                                <i class="fa-solid fa-clipboard-question text-2xl text-slate-600"></i>
+                                <span>Chưa có dữ liệu đo. Hãy kéo thanh trượt và nhấn <strong>"Ghi Số Liệu"</strong> hoặc <strong>"Lấy 6 mẫu tự động"</strong>.</span>
+                            </div>
+                        </td>
+                    </tr>`;
+                els.avgPVText.textContent = '--';
+                els.avgErrorText.textContent = '-- %';
+                els.conclusionText.textContent = 'Chờ ghi số liệu...';
+                els.conclusionText.className = 'text-xs font-semibold text-slate-400';
+                return;
+            }
+
+            let html = '';
+            let sumPV = 0;
+            let sumError = 0;
+
+            state.measurements.forEach((m, idx) => {
+                sumPV += m.PV;
+                sumError += m.errorPct;
+
+                const errBadgeClass = m.errorPct < 0.05
+                    ? 'text-emerald-400'
+                    : (m.errorPct <= 1.2 ? 'text-amber-300' : 'text-rose-400');
+
+                html += `
+                    <tr class="hover:bg-slate-900/90 transition">
+                        <td class="py-2.5 px-3 text-center font-bold text-slate-300">#${idx + 1}</td>
+                        <td class="py-2.5 px-3 text-center text-slate-400">${m.T} K</td>
+                        <td class="py-2.5 px-3 text-right font-semibold text-white">${m.V.toFixed(1)}</td>
+                        <td class="py-2.5 px-3 text-right text-emerald-300">${m.invV.toFixed(4)}</td>
+                        <td class="py-2.5 px-3 text-right font-semibold text-indigo-300">${m.P.toFixed(2)}</td>
+                        <td class="py-2.5 px-3 text-right font-bold text-sky-300">${m.PV.toFixed(2)}</td>
+                        <td class="py-2.5 px-3 text-right ${errBadgeClass}">${m.errorPct.toFixed(2)}%</td>
+                        <td class="py-2.5 px-3 text-center">
+                            <button onclick="deleteDataPoint(${m.id})" class="w-6 h-6 rounded-md bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition inline-flex items-center justify-center" title="Xóa lần đo này">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+
+            els.dataTableBody.innerHTML = html;
+
+            const n = state.measurements.length;
+            const avgPV = sumPV / n;
+            const avgErr = sumError / n;
+
+            els.avgPVText.textContent = `${avgPV.toFixed(2)} atm·cm³`;
+            els.avgErrorText.textContent = `${avgErr.toFixed(2)} %`;
+
+            if (n < 3) {
+                els.conclusionText.textContent = `Cần thêm ${3 - n} mẫu đo để kết luận`;
+                els.conclusionText.className = 'text-xs font-semibold text-amber-300';
+            } else if (avgErr <= 3.0) {
+                els.conclusionText.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>Nghiệm đúng: P·V ≈ hằng số';
+                els.conclusionText.className = 'text-xs font-semibold text-emerald-400';
+            } else {
+                els.conclusionText.innerHTML = '<i class="fa-solid fa-circle-exclamation mr-1"></i>Khác biệt do thay đổi nhiệt độ T';
+                els.conclusionText.className = 'text-xs font-semibold text-amber-400';
+            }
+        }
+
+        function exportTableToCSV() {
+            if (state.measurements.length === 0) {
+                showToast('Bảng số liệu đang trống! Hãy ghi ít nhất 1 lần đo trước khi xuất file.', 'warning');
+                return;
+            }
+
+            const headers = [
+                'Lần đo',
+                'Nhiệt độ T (K)',
+                'Thể tích V (cm3)',
+                'Nghịch đảo 1/V (cm^-3)',
+                'Áp suất P (atm)',
+                'Tích P*V (atm.cm3)',
+                'Sai số tỉ đối (%)'
+            ];
+
+            const rows = state.measurements.map((m, idx) => [
+                idx + 1,
+                m.T,
+                m.V.toFixed(1),
+                m.invV.toFixed(4),
+                m.P.toFixed(2),
+                m.PV.toFixed(2),
+                m.errorPct.toFixed(2)
+            ]);
+
+            const avgPV = state.measurements.reduce((acc, m) => acc + m.PV, 0) / state.measurements.length;
+            const avgErr = state.measurements.reduce((acc, m) => acc + m.errorPct, 0) / state.measurements.length;
+
+            rows.push([]);
+            rows.push(['TRUNG BÌNH', state.temperature, '', '', '', avgPV.toFixed(2), avgErr.toFixed(2)]);
+
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Bao_Cao_Dinh_Luat_Boyle_${state.temperature}K.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('Đã tải xuống file báo cáo Excel (.CSV) thành công!', 'success');
+        }
+
+        function copyTableToClipboard() {
+            if (state.measurements.length === 0) {
+                showToast('Chưa có số liệu để sao chép!', 'warning');
+                return;
+            }
+
+            let text = 'Lần đo\tNhiệt độ (K)\tV (cm³)\t1/V (cm⁻³)\tP (atm)\tP*V\tSai số (%)\n';
+            state.measurements.forEach((m, idx) => {
+                text += `${idx + 1}\t${m.T}\t${m.V.toFixed(1)}\t${m.invV.toFixed(4)}\t${m.P.toFixed(2)}\t${m.PV.toFixed(2)}\t${m.errorPct.toFixed(2)}%\n`;
+            });
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Đã sao chép bảng số liệu vào bộ nhớ tạm (Clipboard)!', 'success');
+            } catch (err) {
+                showToast('Không thể sao chép tự động.', 'danger');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        /***********************************************************************
+         * 8. EVENT LISTENERS & INTERACTIVE CONTROLS
+         ***********************************************************************/
+        function setVolume(newVol) {
+            state.volume = Math.min(120, Math.max(10, Math.round(newVol)));
+            state.currentNoiseFactor = generateNoiseFactor();
+            updatePhysicsReadouts();
+        }
+
+        // Slider Input
+        els.volumeSlider.addEventListener('input', (e) => {
+            setVolume(parseFloat(e.target.value));
+        });
+
+        // Fine +/- Buttons
+        els.volMinusBtn.addEventListener('click', () => setVolume(state.volume - 1));
+        els.volPlusBtn.addEventListener('click', () => setVolume(state.volume + 1));
+
+        // Preset Volume Buttons
+        els.presetVolBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                setVolume(parseFloat(btn.dataset.vol));
+            });
+        });
+
+        // Record & Reset Buttons
+        els.recordBtn.addEventListener('click', recordDataPoint);
+
+        els.resetBtn.addEventListener('click', () => {
+            state.measurements = [];
+            state.nextId = 1;
+            setVolume(60);
+            renderDataTable();
+            refreshChartsRecordedData();
+            showToast('Đã làm mới toàn bộ bảng số liệu và đồ thị.', 'info');
+        });
+
+        // Auto-Sample 6 Standard Points
+        els.autoSampleBtn.addEventListener('click', () => {
+            if (state.autoSampling) return;
+            state.autoSampling = true;
+            state.measurements = [];
+            renderDataTable();
+            refreshChartsRecordedData();
+
+            const sampleVolumes = [20, 30, 40, 60, 80, 100];
+            let stepIndex = 0;
+
+            els.autoSampleBtn.classList.add('opacity-60', 'pointer-events-none');
+            showToast('Đang tự động dịch chuyển pít-tông và thu thập 6 mẫu chuẩn...', 'info');
+
+            const interval = setInterval(() => {
+                if (stepIndex >= sampleVolumes.length) {
+                    clearInterval(interval);
+                    state.autoSampling = false;
+                    els.autoSampleBtn.classList.remove('opacity-60', 'pointer-events-none');
+                    showToast('Hoàn tất lấy 6 mẫu tự động! Hãy quan sát đường Hypebol và đường Tuyến tính.', 'success');
+                    return;
+                }
+                setVolume(sampleVolumes[stepIndex]);
+                recordDataPoint();
+                stepIndex++;
+            }, 420);
+        });
+
+        // Temperature Isotherm Switcher
+        els.tempBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                els.tempBtns.forEach(b => {
+                    b.className = 'temp-btn px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition text-slate-300 hover:text-white';
+                });
+                btn.className = 'temp-btn px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition bg-sky-500 text-slate-950 shadow';
+
+                state.temperature = parseInt(btn.dataset.temp, 10);
+                state.kConstant = parseInt(btn.dataset.k, 10);
+                els.headerKValue.textContent = state.kConstant;
+                els.thermostatLabel.textContent = `Bình điều nhiệt: ${state.temperature} K`;
+
+                rescaleParticleSpeeds();
+                updatePhysicsReadouts();
+                refreshChartsRecordedData();
+                showToast(`Đã chuyển sang đường đẳng nhiệt T = ${state.temperature} K (Hằng số k = ${state.kConstant})`, 'info');
+            });
+        });
+
+        // Real-world Error Toggle
+        els.errorModeToggle.addEventListener('change', (e) => {
+            state.realWorldError = e.target.checked;
+            state.currentNoiseFactor = generateNoiseFactor();
+            updatePhysicsReadouts();
+            if (state.realWorldError) {
+                showToast('Đã BẬT chế độ Sai số thực tế (±2%). Số liệu đo sẽ dao động nhẹ như cảm biến thật.', 'warning');
+            } else {
+                showToast('Đã TẮT chế độ Sai số thực tế. Số liệu tuân theo lý thuyết tuyệt đối.', 'info');
+            }
+        });
+
+        // Show Theoretical Curve Checkbox
+        els.showTheoryCurveToggle.addEventListener('change', (e) => {
+            state.showTheoryCurve = e.target.checked;
+            refreshChartsRecordedData();
+        });
+
+        // Chart View Switcher Tabs
+        els.chartTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                els.chartTabBtns.forEach(b => {
+                    b.className = 'chart-tab-btn px-2.5 py-1 rounded-lg font-semibold text-slate-300 hover:text-white transition';
+                });
+                btn.className = 'chart-tab-btn px-2.5 py-1 rounded-lg font-semibold bg-sky-500 text-slate-950 transition';
+
+                const view = btn.dataset.view;
+                if (view === 'both') {
+                    els.chartsGrid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+                    els.pvChartWrapper.classList.remove('hidden');
+                    els.pinvChartWrapper.classList.remove('hidden');
+                } else if (view === 'pv') {
+                    els.chartsGrid.className = 'grid grid-cols-1 gap-4';
+                    els.pvChartWrapper.classList.remove('hidden');
+                    els.pinvChartWrapper.classList.add('hidden');
+                } else {
+                    els.chartsGrid.className = 'grid grid-cols-1 gap-4';
+                    els.pvChartWrapper.classList.add('hidden');
+                    els.pinvChartWrapper.classList.remove('hidden');
+                }
+                pvChart.resize();
+                pinvChart.resize();
+            });
+        });
+
+        // Export & Copy Table
+        els.exportCsvBtn.addEventListener('click', exportTableToCSV);
+        els.copyTableBtn.addEventListener('click', copyTableToClipboard);
+
+        // Theory Modal Controls
+        els.openTheoryBtn.addEventListener('click', () => {
+            els.theoryModal.classList.remove('hidden');
+            els.theoryModal.classList.add('flex');
+        });
+        const closeTheory = () => {
+            els.theoryModal.classList.add('hidden');
+            els.theoryModal.classList.remove('flex');
+        };
+        els.closeTheoryBtn.addEventListener('click', closeTheory);
+        els.closeTheoryBottomBtn.addEventListener('click', closeTheory);
+
+        // Keyboard Shortcuts (Arrow keys for Volume, Spacebar to Record)
+        window.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && e.code === 'Space') {
+                e.preventDefault();
+                recordDataPoint();
+                return;
+            }
+            if (e.code === 'Space') {
+                e.preventDefault();
+                recordDataPoint();
+            } else if (e.code === 'ArrowRight' || e.code === 'ArrowUp') {
+                setVolume(state.volume + 1);
+            } else if (e.code === 'ArrowLeft' || e.code === 'ArrowDown') {
+                setVolume(state.volume - 1);
+            }
+        });
+
+        /***********************************************************************
+         * 9. BOOTSTRAP ON WINDOW LOAD
+         ***********************************************************************/
+        window.onload = function () {
+            initAnalogGaugeTicks();
+            initParticles();
+            initCharts();
+            updatePhysicsReadouts();
+            renderCylinderSimulation();
+        };
+    </script>
+</body>
+</html>
